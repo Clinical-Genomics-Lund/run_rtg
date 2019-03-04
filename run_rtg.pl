@@ -52,7 +52,16 @@ my $vcf = $opt{'vcf'};
 my $genome_dir = $opt{'genome_dir'} || "/data/bnf/ref/b37/SDF";
 my $tmpdir = $opt{tmpdir} || "./tmpdir";
 
-print_run("mkdir -p $tmpdir") if -e "$tmpdir";
+print_run("mkdir -p $tmpdir") unless -e "$tmpdir";
+
+# If vcf is not bgzipped, do it in the temp folder
+unless( $vcf =~ /\.gz$/ ) {
+    print_run("cp $vcf $tmpdir");
+    print_run("bgzip -\@10 $tmpdir/$vcf");
+    print_run("tabix $tmpdir/$vcf.gz");
+    $vcf = "$tmpdir/$vcf.gz";
+}
+
 
 # Intersect bed
 print_run("bedtools intersect -a $bed -b $GIAB_BED > $tmpdir/$date.intersect.bed");
